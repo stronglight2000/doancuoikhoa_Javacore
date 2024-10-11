@@ -1,10 +1,9 @@
 package doancuoikhoa.login.view;
 
 import doancuoikhoa.login.data.Data;
-import doancuoikhoa.login.entities.LandLord;
-import doancuoikhoa.login.entities.RentalRequest;
-import doancuoikhoa.login.entities.Room;
-import doancuoikhoa.login.entities.User;
+import doancuoikhoa.login.entities.*;
+import doancuoikhoa.login.enums.ComplaintStatus;
+import doancuoikhoa.login.enums.ContractStatus;
 import doancuoikhoa.login.service.*;
 import doancuoikhoa.login.utils.Utils;
 
@@ -19,6 +18,8 @@ public class Menu {
     TenantService tenantService = new TenantService();
     LandLordService landLordService = new LandLordService();
     ContractService contractService = new ContractService();
+    ComplainService complainService = new ComplainService();
+    AdminService adminService = new AdminService();
     private void registerMenu(){
         System.out.println("1-Đăng nhập");
         System.out.println("2-Đăng ký");
@@ -59,13 +60,44 @@ public class Menu {
 
     }
     private void displayMenuAdmin(){
-        System.out.println("1. Thêm chủ trọ");
-        System.out.println("2. Sửa thông tin chủ trọ");
-        System.out.println("3. Ẩn chủ trọ");
-        System.out.println("4. Thêm người cho thuê");
-        System.out.println("5. Sửa thông tin người cho thuê");
-        System.out.println("6. Ẩn người cho thuê");
-        System.out.println("7. Đăng xuất");
+        System.out.println("1. Thêm user");
+        System.out.println("2. Danh sách người dùng");
+        System.out.println("3. Danh sách khiếu nại");
+        System.out.println("4. Khóa phòng");
+        System.out.println("5. Khóa tài khoản người dùng.");
+        System.out.println("6. Đăng xuất");
+    }
+    private void displayMenuListOfComplaints(){
+        System.out.println("1.Danh sách đơn khiếu nại chưa được xử lý");
+        System.out.println("2. Danh sách đơn khiếu nại đang xử lý");
+        System.out.println("3. Danh sách đơn khiếu nại đã xử lý");
+        System.out.println("4. Danh sách đơn khiếu nại đã trễ hạn");
+        System.out.println("5. Quay lại");
+    }
+    public void selectMenuListOfComplanints(Scanner scanner){
+        while (true) {
+            displayMenuListOfComplaints();
+            int choice = Utils.inputInteger(scanner);
+            switch (choice) {
+                case 1:
+                    complainService.displayComplaintsByStatus(ComplaintStatus.PENDING);
+                    break;
+                case 2:
+                    complainService.displayComplaintsByStatus(ComplaintStatus.INREVIEW);
+                    break;
+                case 3:
+                    complainService.displayComplaintsByStatus(ComplaintStatus.RESOLVED);
+                    break;
+                case 4:
+                    complainService.displayComplaintsByStatus(ComplaintStatus.OVERDUE);
+                    break;
+                case 5:
+                    break;
+                default:
+                    System.out.println("Không có lựa chọn phù hợp.");
+
+            }
+        }
     }
     public void selectMenuAdminWhenLogInSuccess(Scanner scanner){
         while (true){
@@ -77,18 +109,19 @@ public class Menu {
                 case 2:
                     break;
                 case 3:
+                    selectMenuListOfComplanints(scanner);
                     break;
                 case 4:
                     break;
                 case 5:
+                    adminService.blockUser(scanner);
                     break;
                 case 6:
-                    break;
-                case 7:
                     selectRegisterMenu(scanner);
                     break;
-                case 8:
-                    System.exit(0);
+                default:
+                    System.out.println("Không có lựa chọn phù hợp");
+
             }
         }
 
@@ -101,7 +134,8 @@ public class Menu {
         System.out.println("5. Yêu cầu thuê phòng trọ.");
         System.out.println("6. Hợp đồng thuê trọ");
         System.out.println("7. Sửa thông tin người dùng");
-        System.out.println("8. Đăng xuất");
+        System.out.println("8. Khiếu nại");
+        System.out.println("9. Đăng xuất");
     }
     private void displayLandLordContractMenu(){
         System.out.println("1. Hợp đồng đang chờ người thuê đồng ý.");
@@ -110,25 +144,47 @@ public class Menu {
         System.out.println("4. Hợp đồng yêu cầu hủy");
         System.out.println("5. Quay lại");
     }
-    public void selectLandLordContractMenu(Scanner scanner, int landLordId) {
+    private void displayLandLordComplainMenu(){
+        System.out.println("1. Khiếu nại");
+        System.out.println("2. Quay lại");
+    }
+    public void selectLandLordComplainMenu(Scanner scanner, User user) {
+        while (true) {
+            displayLandLordComplainMenu();
+            int choice = Utils.inputInteger(scanner);
+            switch (choice) {
+                case 1:
+                    Complaint complaint = complainService.createLandLordComplaintFile(scanner, user.getId());
+                    Data.complaints.add(complaint);
+                    break;
+                case 2:
+                    selectMenuLandLord(scanner,user);
+                    break;
+                default:
+                    System.out.println("Không có lựa chọn phù hợp.");
+
+            }
+        }
+    }
+    public void selectLandLordContractMenu(Scanner scanner, User user) {
         while (true) {
             displayLandLordContractMenu();
             int choice = Utils.inputInteger(scanner);
             switch (choice) {
                 case 1:
-                    landLordService.findPendingContractsByLandLordId(landLordId);
+                    landLordService.findPendingContractsByLandLordId(user.getId());
                     break;
                 case 2:
-                    landLordService.findSignedContractsByLandLordId(landLordId);
+                    landLordService.findSignedContractsByLandLordId(user.getId());
                     break;
                 case 3:
                     break;
                 case 4:
-                    landLordService.findPendingCancelContractsByLandLordId(landLordId,scanner);
-                    landLordService.processCancelContract(scanner,landLordId);
+                    landLordService.findPendingCancelContractsByLandLordId(user, scanner);
+                    landLordService.processCancelContract(scanner, user);
                     break;
                 case 5:
-                    selectMenuLandLord(scanner, landLordId);
+                    selectMenuLandLord(scanner, user);
                 default:
                     System.out.println("Không có lựa chọn phù hợp, mời bạn nhập lại.");
 
@@ -136,13 +192,37 @@ public class Menu {
             }
         }
     }
-    public void selectMenuLandLord(Scanner scanner, int landLordId){
+    private void displayMenuChangeInformationLandLord(){
+        System.out.println("1. Đổi email");
+        System.out.println("2. Đổi mật khẩu");
+        System.out.println("3. Quay lại.");
+    }
+    public void selectMenuChangeInformationLandLord(Scanner scanner, User user){
+        while(true){
+            displayMenuChangeInformationLandLord();
+            int choice = Utils.inputInteger(scanner);
+            switch (choice){
+                case 1:
+                    userService.changeEmailWhenLogIn(scanner,user);
+                    break;
+                case 2:
+                    userService.changePassWordWhenLogIn(scanner,user);
+                    break;
+                case 3:
+                    selectMenuLandLord(scanner,user);
+                default:
+                    System.out.println("Không có lựa chọn phù hợp.");
+
+            }
+        }
+    }
+    public void selectMenuLandLord(Scanner scanner, User user){
         while (true){
             displayMenuLandLord();
             int choice = Utils.inputInteger(scanner);
             switch (choice){
                 case 1:
-                    Room room = roomService.createRoom(scanner,landLordId);
+                    Room room = roomService.createRoom(scanner, user.getId());
                     roomService.insert(room);
                     break;
                 case 2:
@@ -152,18 +232,20 @@ public class Menu {
 
                     break;
                 case 4:
-                    landLordService.displayListRoom(landLordId);
+                    landLordService.displayListRoom(user.getId());
                     break;
                 case 5:
-                    landLordService.processRentalRequest(landLordId,scanner);
+                    landLordService.processRentalRequest(user.getId(), scanner);
                     break;
                 case 6:
-                    selectLandLordContractMenu(scanner,landLordId);
+                    selectLandLordContractMenu(scanner, user);
                     break;
                 case 7:
-                    System.out.println(Data.rentalRequests);
+                    selectMenuChangeInformationLandLord(scanner,user);
                     break;
                 case 8:
+                    selectLandLordComplainMenu(scanner, user);
+                case 9:
                     selectRegisterMenu(scanner);
                 default:
                     System.out.println("Không có chức năng phù hợp");
@@ -177,7 +259,8 @@ public class Menu {
         System.out.println("3. Hợp đồng");
         System.out.println("4. Danh sách phòng trọ yêu thích");
         System.out.println("5. Sửa thông tin người dùng");
-        System.out.println("6. Đăng xuất");
+        System.out.println("6. Khiếu nại");
+        System.out.println("7. Đăng xuất");
     }
 
     private void displayMenuSearchRoom(){
@@ -186,22 +269,21 @@ public class Menu {
         System.out.println("3. Tìm kiếm theo loại nhà đất ");
         System.out.println("4. Quay lại");
     }
-    public void selectMenuSearchRoom(Scanner scanner, int tenantId){
+    public void selectMenuSearchRoom(Scanner scanner, User user){
         while(true){
             displayMenuSearchRoom();
             int choice = Utils.inputInteger(scanner);
             switch (choice){
                 case 1:
-                    tenantService.searchRoomsByPrice(scanner,tenantId);
+                    tenantService.searchRoomsByPrice(scanner, user);
                     break;
-                case 2:
-                    tenantService.searchRoomsByLocation(scanner,tenantId);
+                case 2: tenantService.searchRoomsByLocation(scanner, user);
                     break;
                 case 3:
-                    tenantService.searchRoomsByType(scanner,tenantId);
+                    tenantService.searchRoomsByType(scanner, user);
                     break;
                 case 4:
-                    selectMenuTenant(scanner,tenantId);
+                    selectMenuTenant(scanner,user);
             }
         }
     }
@@ -209,16 +291,16 @@ public class Menu {
         System.out.println("1. Yêu cầu thuê phòng");
         System.out.println("2. Quay lại");
     }
-    public void selectMenuRequestToRent(Scanner scanner,int tenantId){
+    public void selectMenuRequestToRent(Scanner scanner,User user){
         while(true){
             displayMenuRequestToRent();
             int choice = Utils.inputInteger(scanner);
             switch (choice){
                 case 1:
-                    tenantService.requestToRentRoom(scanner,tenantId);
+                    tenantService.requestToRentRoom(scanner, user.getId());
                     break;
                 case 2:
-                    selectMenuTenant(scanner,tenantId);
+                    selectMenuTenant(scanner,user);
                     break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
@@ -234,26 +316,28 @@ public class Menu {
         System.out.println("5. Danh sách hợp đồng đã hoàn thành");
         System.out.println("6. Quay lại");
     }
-    public void selectTenantContractMenu(Scanner scanner,int tenantId){
+    public void selectTenantContractMenu(Scanner scanner,User user){
         while(true){
            displayTenantContractMenu();
             int choice = Utils.inputInteger(scanner);
             switch (choice){
                 case 1:
-                    tenantService.displayContractAfterLandLordApproved(tenantId,scanner);
+                    tenantService.displayContractAfterLandLordApproved(user, scanner);
                     break;
                 case 2:
-                    tenantService.findSignedContractsByTenantId(tenantId);
+                    tenantService.findStatusConTractsByTenantId(user.getId(), ContractStatus.SIGNED);
                     break;
                 case 3:
-                    tenantService.cancelContract(scanner,tenantId);
+                    tenantService.cancelContract(scanner, user);
                     break;
                 case 4:
+                    tenantService.findStatusConTractsByTenantId(user.getId(), ContractStatus.REJECTED);
                     break;
                 case 5:
+                    tenantService.findStatusConTractsByTenantId(user.getId(), ContractStatus.COMPLETED);
                     break;
                 case 6:
-                    selectMenuTenant(scanner,tenantId);
+                    selectMenuTenant(scanner,user);
                     break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
@@ -261,41 +345,83 @@ public class Menu {
             }
         }
     }
-    public void selectMenuTenant(Scanner scanner, int tenantId){
+    private void displayTenantComplaintMenu(){
+        System.out.println("1. Khiếu nại");
+        System.out.println("2. Quay lại.");
+    }
+    public void selectTenantComplaintMenu(Scanner scanner, User user){
+        while(true){
+            displayTenantComplaintMenu();
+            int choice = Utils.inputInteger(scanner);
+            switch (choice){
+                case 1:
+                    complainService.createTenantComplaintFile(scanner, user.getId());
+                    break;
+                case 2:
+                    selectMenuTenant(scanner,user);
+                    break;
+                default:
+                    System.out.println("Không có lựa chọn phù hợp.");
+
+            }
+        }
+    }
+    private void displayMenuChangeInformationTenant(){
+        System.out.println("1. Đổi email");
+        System.out.println("2. Đổi mật khẩu");
+        System.out.println("3. Quay lại.");
+    }
+    public void selectMenuChangeInformationTenant(Scanner scanner, User user){
+        while(true){
+            displayMenuChangeInformationTenant();
+            int choice = Utils.inputInteger(scanner);
+            switch (choice){
+                case 1:
+                    userService.changeEmailWhenLogIn(scanner,user);
+                    break;
+                case 2:
+                    userService.changePassWordWhenLogIn(scanner,user);
+                    break;
+                case 3:
+                    selectMenuLandLord(scanner,user);
+                default:
+                    System.out.println("Không có lựa chọn phù hợp.");
+
+            }
+        }
+    }
+
+    public void selectMenuTenant(Scanner scanner, User user){
         while (true){
             displayMenuTenant();
             int choice = Utils.inputInteger(scanner);
             switch (choice){
                 case 1:
-                    selectMenuSearchRoom(scanner,tenantId);
+                    selectMenuSearchRoom(scanner,user);
                     break;
                 case 2:
-                   selectMenuRequestToRent(scanner,tenantId);
+                   selectMenuRequestToRent(scanner,user);
                     break;
                 case 3:
-                    selectTenantContractMenu(scanner,tenantId);
+                    selectTenantContractMenu(scanner, user);
                     break;
                 case 4:
                     tenantService.displayFavouriteList();
                     break;
                 case 5:
-                    System.out.println(Data.rentalRequests);
+                    selectMenuChangeInformationTenant(scanner,user);
                     break;
                 case 6:
-                    selectRegisterMenu(scanner);
+                    selectTenantComplaintMenu(scanner, user);
                 case 7:
-                    System.out.println(Data.users);
-                    break;
-                case 8:
-                    System.out.println(tenantId);
-                    break;
+                    selectRegisterMenu(scanner);
                 default:
                     System.out.println("Không có chức năng phù hợp.");
 
             }
         }
     }
-    private void displayMenuSuccessful(){
+    /*private void displayMenuSuccessful(){
         System.out.println("Mời bạn chọn các dịch vụ sau");
         System.out.println("1. Thay đổi username");
         System.out.println("2. Thay đổi email");
@@ -304,7 +430,7 @@ public class Menu {
         System.out.println("0. Thoát chương trình");
 
     }
-    public void selectMenuSuccessful(Scanner scanner){
+    public void selectMenuSuccessful(Scanner scanner, User user){
         while(true){
             displayMenuSuccessful();
             choice = Integer.parseInt(scanner.nextLine());
@@ -313,10 +439,10 @@ public class Menu {
                     userService.changeUserNameWhenLogIn(scanner);
                     break;
                 case 2:
-                    userService.changeEmailWhenLogIn(scanner);
+                    userService.changeEmailWhenLogIn(scanner,user);
                     break;
                 case 3:
-                    userService.changePassWordWhenLogIn(scanner);
+                    userService.changePassWordWhenLogIn(scanner, user);
                     break;
                 case 4:
                     selectRegisterMenu(scanner);
@@ -332,7 +458,7 @@ public class Menu {
 
 
 
-    }
+    }*/
 
 
 

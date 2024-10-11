@@ -31,12 +31,6 @@ public class ContractService {
         if (!additionalClause.isEmpty()) {
             clause += "\nCÁC ĐIỀU KHOẢN BỔ SUNG:\n" + additionalClause;
         }
-       /* System.out.println("Mời bạn nhập ngày bắt đầu hợp đồng theo định dạng dd/MM/yyyy");
-        String beginDate = scanner.nextLine();
-        LocalDate startDate = Utils.convertStringToDate(beginDate,"dd/MM/yyyy");
-        System.out.println("Mời bạn nhập ngày kết thúc hợp đồng theo định dạng dd/MM/yyyy");
-        String lastDate = scanner.nextLine();
-        LocalDate endDate = Utils.convertStringToDate(lastDate,"dd/MM/yyyy");*/
         Contract contract = new Contract(id,tenantId,landLordId,clause,startDate,endDate );
         Data.contracts.add(contract);
         System.out.println("Tạo hợp đồng thành công. Hợp đồng đang được gửi đến cho người thuê");
@@ -112,6 +106,14 @@ public class ContractService {
             }
         }
         throw new IllegalArgumentException("Không tìm thấy phòng với id: " + roomId);
+    }
+    public String findRoomIdByTenantId(int tenantId){
+        for (Contract contract: Data.contracts) {
+            if(contract.getTenantId() == tenantId && contract.getContractStatus() == ContractStatus.SIGNED){
+                return contract.getRoomId();
+            }
+        }
+        return null;
     }
     }
 

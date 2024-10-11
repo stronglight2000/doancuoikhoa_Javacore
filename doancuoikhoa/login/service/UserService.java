@@ -5,6 +5,7 @@ import doancuoikhoa.login.entities.LandLord;
 import doancuoikhoa.login.entities.Tenant;
 import doancuoikhoa.login.entities.User;
 import doancuoikhoa.login.enums.Role;
+import doancuoikhoa.login.enums.UserStatus;
 import doancuoikhoa.login.utils.Utils;
 import doancuoikhoa.login.view.Menu;
 
@@ -161,16 +162,16 @@ public class UserService {
                 duplicatePassWord = findPassWord(username, password);
                 User duplicateUser = findUserName(username);
                 Menu menu = new Menu();
-                if (duplicatePassWord!=null && duplicateUserName !=null ) {
+                if (duplicatePassWord!=null && duplicateUserName !=null && duplicatePassWord.getStatus() == UserStatus.ACTIVE ) {
                     if(findRoleByUsername(username) == Role.ADMIN){
                         System.out.println("Chào mừng" + " " + username);
                         menu.selectMenuAdminWhenLogInSuccess(scanner);
                     }else if(findRoleByUsername(username) == Role.LANDLORD){
                         System.out.println("Chào mừng" + " " + username);
-                        menu.selectMenuLandLord(scanner,duplicateUser.getId());
+                        menu.selectMenuLandLord(scanner,duplicateUser);
                     }else{
                         System.out.println("Chào mừng" + " " + username);
-                        menu.selectMenuTenant(scanner,duplicateUser.getId());
+                        menu.selectMenuTenant(scanner,duplicateUser);
                     }
                     return duplicateUser;
                     /*Utils.loggedInUsername = username;*/
@@ -199,28 +200,60 @@ public class UserService {
         }
     }
 
-    public void changePassWordWhenLogIn(Scanner scanner) {
-        System.out.println("Mời bạn nhập password để xác minh");
+    public void changePassWordWhenLogIn(Scanner scanner, User user) {
+        boolean isValidPassword;
+        String newPassWord;
+        Utils utils = new Utils();
+        System.out.println("Mời bạn nhập lại password để xác minh");
         String password = scanner.nextLine();
-        User existedPassWord = findPassWord(Utils.loggedInUsername,password);
-        if (existedPassWord != null) {
-            System.out.println("Nhập password mới mà bạn muốn đổi");
-            String newPassWord = scanner.nextLine();
-            existedPassWord.setPassword(newPassWord);
+        User existedUser = findPassWord(user.getUsername(), password);
+        // Kiểm tra nếu password nhập sai
+        if (existedUser == null) {
+            System.out.println("Mật khẩu hiện tại không chính xác.");
+            return;
+        }
+            do{
+                System.out.println("Mời bạn nhập vào password:(password dài từ 7 đến 15 ký tự, chứa ít nhất 1 ký tự in hoa, 1 ký tự đặc biệt)");
+                newPassWord = scanner.nextLine();
+                isValidPassword = utils.checkPassword(newPassWord);
+                if(!isValidPassword){
+                    System.out.println("Password không hợp lệ, mời bạn nhập lại.");
+                }else{
+                    System.out.println("Xác nhận lại password mới:");
+                    String confirmPassword = scanner.nextLine();
+                    if (!newPassWord.equals(confirmPassword)) {
+                        System.out.println("Password xác nhận không khớp. Vui lòng thử lại.");
+                        isValidPassword = false;
+                    }
+                }
+            }while (!isValidPassword);
+            user.setPassword(newPassWord);
             System.out.println("Đổi password thành công");
         }
+
+    public void changeEmailWhenLogIn(Scanner scanner, User user) {
+        Utils utils = new Utils();
+        String newEmail;
+        boolean isValidEmail;
+        User existedEmail;
+            do {
+                System.out.println("Nhập email mới mà bạn muốn đổi");
+                newEmail = scanner.nextLine();
+                isValidEmail = utils.checkEmail(newEmail);
+                existedEmail = findUserEmail(newEmail);
+                if (!isValidEmail) {
+                    System.out.println("Email không hợp lệ. Vui lòng nhập đúng định dạng.");
+                } else if (existedEmail != null) {
+                    System.out.println("Email này đã tồn tại. Vui lòng nhập email khác.");
+                }
+
+            }while(existedEmail !=null || !isValidEmail );
+            user.setEmail(newEmail);
+            System.out.println("Đổi email thành công");
     }
 
-    public void changeEmailWhenLogIn(Scanner scanner) {
-        System.out.println("Mời bạn nhập email để xác minh");
-        String email = scanner.nextLine();
-        User existedEmail = findUserEmail(email);
-        if (existedEmail != null) {
-            System.out.println("Nhập email mới mà bạn muốn đổi");
-            String newEmail = scanner.nextLine();
-            existedEmail.setEmail(newEmail);
-            System.out.println("Đổi email thành công");
-        }
+    public void displayUser(){
+
     }
 
 

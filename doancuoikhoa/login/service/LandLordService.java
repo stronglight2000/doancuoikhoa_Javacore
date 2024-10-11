@@ -1,10 +1,7 @@
 package doancuoikhoa.login.service;
 
 import doancuoikhoa.login.data.Data;
-import doancuoikhoa.login.entities.Contract;
-import doancuoikhoa.login.entities.RentalRequest;
-import doancuoikhoa.login.entities.Room;
-import doancuoikhoa.login.entities.Tenant;
+import doancuoikhoa.login.entities.*;
 import doancuoikhoa.login.enums.ContractStatus;
 import doancuoikhoa.login.enums.RoomStatus;
 import doancuoikhoa.login.utils.Utils;
@@ -95,18 +92,18 @@ public class LandLordService {
         System.out.println("Không tìm thấy hợp đồng với ID phù hợp.");
     }
 
-    public void findPendingCancelContractsByLandLordId(int landLordId, Scanner scanner) {
+    public void findPendingCancelContractsByLandLordId(User user, Scanner scanner) {
         Menu menu = new Menu();
         boolean foundContract = false;
         for (Contract contract : Data.contracts) {
-            if (contract.getLandLordId() == landLordId && contract.getContractStatus() == ContractStatus.PENDINGCANCEL) {
+            if (contract.getLandLordId() == user.getId() && contract.getContractStatus() == ContractStatus.PENDINGCANCEL) {
                 contractService.formatContract(contract.getId());
                 foundContract = true;
             }
         }
         if(!foundContract){
             System.out.println("Không tìm thấy hợp đồng với id phù hợp.");
-            menu.selectMenuLandLord(scanner,landLordId);
+            menu.selectMenuLandLord(scanner,user);
         }
 
     }
@@ -121,7 +118,7 @@ public class LandLordService {
         return null;
     }
 
-    public void processCancelContract(Scanner scanner, int landLordId) {
+    public void processCancelContract(Scanner scanner, User user) {
         System.out.println("Bạn có muốn hủy/từ chối nào không (Y/N)");
         Menu menu = new Menu();
         String choice = scanner.nextLine();
@@ -153,10 +150,10 @@ public class LandLordService {
                 }
             }
             // Sau khi xử lý xong chuyển về menu của chủ trọ
-            menu.selectMenuLandLord(scanner,landLordId);
+            menu.selectMenuLandLord(scanner,user);
 
         }else {
-            menu.selectMenuLandLord(scanner,landLordId);
+            menu.selectMenuLandLord(scanner,user);
         }
 
 

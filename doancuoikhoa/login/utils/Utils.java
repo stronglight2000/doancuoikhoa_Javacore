@@ -29,7 +29,6 @@ public class Utils {
                     + "- Bên nào vi phạm các điều khoản chung thì phải chịu trách nhiệm trước pháp luật.\n"
                     + "- Hợp đồng này được lập thành 02 bản và có giá trị pháp lý như nhau, mỗi bên giữ một bản.\n";
 
-    public static String loggedInUsername;
     public boolean checkEmail(String email) {
         String validEmail = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$";
         Pattern pattern = Pattern.compile(validEmail);

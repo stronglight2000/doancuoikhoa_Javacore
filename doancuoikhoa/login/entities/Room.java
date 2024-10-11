@@ -91,4 +91,12 @@ public class Room {
     public void setLandLordId(int landLordId) {
         this.landLordId = landLordId;
     }
+
+    public boolean isBlocked() {
+        return isBlocked;
+    }
+
+    public void setBlocked(boolean blocked) {
+        isBlocked = blocked;
+    }
 }

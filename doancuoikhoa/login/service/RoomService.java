@@ -66,14 +66,36 @@ public class RoomService implements IAction<Room> {
 
     @Override
     public void display(List<Room> rooms) {
-        System.out.println("=====================Danh sách phòng trọ===============================================================");
-        System.out.printf("%-3s \t %-70s \t %-50s \t %-20s %-10s %-15s \n", "ID", "Mô tả", "Vị trí", "Loại phòng", "Mức giá","Trạng thái");
-        System.out.println("====================================================================================================================================================================================");
-        for (Room room : rooms) {
-            System.out.printf("%-3s \t %-70s \t %-50s \t %-20s %-10s %-15s \n", room.getId(), room.getDescription(), room.getLocation(), room.getPropertyType(), room.getPrice(),room.getRoomStatus());
-        }
 
+        System.out.println("=============================== Danh sách phòng trọ ===============================");
+        System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s %-10s\n",
+                "ID", "Mô tả", "Vị trí", "Loại phòng", "Giá", "Trạng thái", "Bị khóa");
+        System.out.println("===================================================================================");
+
+        for (Room room : rooms) {
+            String roomStatus = (room.getRoomStatus() != null) ? room.getRoomStatus().toString() : "N/A";
+            String isBlocked = room.isBlocked() ? "Có" : "Không";
+
+            // Giới hạn mô tả tối đa 20 ký tự
+            String description = room.getDescription();
+            if (description.length() > 20) {
+                description = description.substring(0, 17) + "...";
+            }
+
+            System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s %-10s\n",
+                    room.getId(),
+                    room.getDescription(),
+                    room.getLocation(),
+                    room.getPropertyType(),
+                    room.getPrice().toString(),
+                    roomStatus,
+                    isBlocked
+            );
+        }
+        System.out.println("===================================================================================");
     }
+
+
     public Room findRoomById(Scanner scanner) {
         System.out.println("Mời bạn nhập Id phòng cần tìm kiếm");
         String id = scanner.nextLine();
@@ -114,6 +136,21 @@ public class RoomService implements IAction<Room> {
             }
         }
         throw new IllegalArgumentException("Không tìm thấy phòng với id: " + roomId);
+    }
+    // Hàm khóa phòng
+    public void blockRoom(String roomId){
+        for (Room room: Data.rooms) {
+            if(room.getId().equalsIgnoreCase(roomId)){
+                if(room.isBlocked()){
+                    System.out.println("Phòng với Id" + roomId +"đã bị khóa trước đó");
+                }else{
+                    room.setBlocked(true);
+                    System.out.println("Phòng với ID"+ roomId + "đã bị khóa");
+                    break;
+                }
+
+            }
+        }
     }
 
 

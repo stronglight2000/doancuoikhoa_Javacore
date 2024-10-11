@@ -16,8 +16,8 @@ import java.util.Scanner;
 public class TenantService {
     RoomService roomService = new RoomService();
     ContractService contractService = new ContractService();
-
-    public void searchRoomsByPrice(Scanner scanner, int tenantId) {
+    // Tìm phòng theo khoảng giá
+    public void searchRoomsByPrice(Scanner scanner, User user) {
         List<Room> roomss = new ArrayList<>();
         System.out.println("Mời bạn nhập khoảng giá thấp nhất");
         BigDecimal minPrice = Utils.inputBigDecimal(scanner);
@@ -25,7 +25,7 @@ public class TenantService {
         System.out.println("Mời bạn nhập khoảng giá cao nhất");
         BigDecimal maxPrice = Utils.inputBigDecimal(scanner);
         for (Room room : Data.rooms) {
-            if (room.getPrice().compareTo(minPrice) >= 0 && room.getPrice().compareTo(maxPrice) <= 0) {
+            if (room.getPrice().compareTo(minPrice) >= 0 && room.getPrice().compareTo(maxPrice) <= 0 && room.getRoomStatus() == RoomStatus.AVAIABLE) {
                 roomss.add(room);
                 existedRooms = true;
 
@@ -35,7 +35,7 @@ public class TenantService {
         // Nếu tồn tại phòng thì hiển thị, không thì thông báo lỗi
         if(existedRooms){
             roomService.display(roomss);
-            askTenantifWantToAddRRoomToFavourList(scanner,tenantId);
+            askTenantifWantToAddRRoomToFavourList(scanner,user);
         }
         else {
             System.out.println("Không tìm thấy phòng phù hợp");
@@ -43,7 +43,7 @@ public class TenantService {
         }
     }
 
-    public void searchRoomsByLocation(Scanner scanner, int tenantId){
+    public void searchRoomsByLocation(Scanner scanner, User user){
         List<Room> roomss = new ArrayList<>();
         System.out.println("Mời bạn nhập vào địa chỉ phòng cần tìm");
         String location = scanner.nextLine();
@@ -52,7 +52,7 @@ public class TenantService {
         boolean existedRooms = false;
         for (Room room : Data.rooms) {
             String normalAddress = Utils.removeAccents(room.getLocation()).toLowerCase();
-            if (normalAddress.contains(searchResult)){
+            if (normalAddress.contains(searchResult) && room.getRoomStatus() == RoomStatus.AVAIABLE){
                 roomss.add(room);
                 existedRooms = true;
 
@@ -61,13 +61,13 @@ public class TenantService {
         }
         if(existedRooms){
             roomService.display(roomss);
-            askTenantifWantToAddRRoomToFavourList(scanner,tenantId);
+            askTenantifWantToAddRRoomToFavourList(scanner,user);
         }else{
             System.out.println("Không tìm thấy phòng phù hợp.");
         }
 
     }
-    public void searchRoomsByType(Scanner scanner, int tenantId){
+    public void searchRoomsByType(Scanner scanner, User user){
         Menu menu = new Menu();
         List<Room> roomss = new ArrayList<>();
         boolean existedRooms = false;
@@ -76,20 +76,20 @@ public class TenantService {
         String typeAfterRemove = Utils.removeAccents(type).toLowerCase();
         for (Room room: Data.rooms) {
             String typeRoomAfter = Utils.removeAccents(room.getPropertyType()).toLowerCase();
-            if(typeRoomAfter.contains(typeAfterRemove)){
+            if(typeRoomAfter.contains(typeAfterRemove) && room.getRoomStatus() == RoomStatus.AVAIABLE){
                 roomss.add(room);
                 existedRooms = true;
             }
         }
         if(existedRooms){
             roomService.display(roomss);
-            askTenantifWantToAddRRoomToFavourList(scanner,tenantId);
+            askTenantifWantToAddRRoomToFavourList(scanner,user);
 
         }else{
             System.out.println("Không tìm thấy loại phòng phù hợp.");
         }
     }
-    public void askTenantifWantToAddRRoomToFavourList(Scanner scanner, int tenantId) {
+    public void askTenantifWantToAddRRoomToFavourList(Scanner scanner, User user) {
         Menu menu = new Menu();
         String choice;
         System.out.println("Bạn có muốn thêm phòng trọ nào vào danh sách yêu thích không(Y/N)?");
@@ -97,12 +97,12 @@ public class TenantService {
         if (choice.equalsIgnoreCase("Y")) {
             do {
 
-                addRoomToFavouriteList(scanner, tenantId);
+                addRoomToFavouriteList(scanner, user.getId());
                 System.out.println("Bạn có muốn tiếp tục thêm không(Y/N)");
                 choice = scanner.nextLine();
             } while (choice.equalsIgnoreCase("Y"));
         }else {
-            menu.selectMenuSearchRoom(scanner,tenantId);
+            menu.selectMenuSearchRoom(scanner,user);
         }
     }
     public void addRoomToFavouriteList(Scanner scanner, int tenantId){
@@ -134,22 +134,28 @@ public class TenantService {
             System.out.printf("%-3s \t %-70s \t %-50s \t %-20s %-10s %-15s \n", room.getId(), room.getDescription(), room.getLocation(), room.getPropertyType(), room.getPrice(),room.getRoomStatus());
         }
     }
-    public Contract findPendingContractByTenantId(int tenantId, Scanner scanner){
+    public Contract findPendingContractByTenantId(User user, Scanner scanner){
         Menu menu = new Menu();
         for (Contract contract: Data.contracts) {
-            if(contract.getTenantId() == tenantId && contract.getContractStatus() == ContractStatus.PENDING){
+            if(contract.getTenantId() == user.getId() && contract.getContractStatus() == ContractStatus.PENDING){
                 return contract;
             }
         }
         System.out.println("Không tìm thấy hợp đồng với Id bạn chọn.");
-        menu.selectMenuTenant(scanner, tenantId);
+        menu.selectMenuTenant(scanner, user);
         return null;
     }
-    public void findSignedContractsByTenantId(int tenantId){
+
+    public void findStatusConTractsByTenantId(int tenantId, ContractStatus status){
+        boolean found = false; // Biến cờ để kiểm tra xem có hợp đồng nào phù hợp không
         for (Contract contract: Data.contracts) {
-            if(contract.getTenantId() == tenantId && contract.getContractStatus() == ContractStatus.SIGNED){
+            if(contract.getTenantId() == tenantId && contract.getContractStatus() == status){
                 contractService.formatContract(contract.getId());
+                found = true;
             }
+        }
+        if(!found){
+            System.out.println("Không tìm thấy hợp đồng với trạng thái " + status + " cho người thuê có ID: " + tenantId);
         }
     }
     public void requestToRentRoom(Scanner scanner,int tenantId){
@@ -181,9 +187,9 @@ public class TenantService {
         Data.rentalRequests.add(rentalRequest);
         System.out.println("Yêu cầu thuê phòng đã được gửi đến cho chủ phòng.");
     }
-    public void displayContractAfterLandLordApproved(int tenantId,Scanner scanner){
+    public void displayContractAfterLandLordApproved(User user,Scanner scanner){
         Menu menu = new Menu();
-        Contract contract = findPendingContractByTenantId(tenantId,scanner);
+        Contract contract = findPendingContractByTenantId(user,scanner);
         // Format và hiển thị hợp đồng
         contractService.formatContract(contract.getId());
         Contract existedContract;
@@ -214,10 +220,10 @@ public class TenantService {
             }
         }while (!validInput);
         // Sau khi xử lý xong, quay lại menu cho người thuê
-        menu.selectMenuTenant(scanner, tenantId);
+        menu.selectMenuTenant(scanner, user);
 
     }
-    public void cancelContract(Scanner scanner, int tenantId){
+    public void cancelContract(Scanner scanner, User user){
         Menu menu = new Menu();
         Contract cancelContract;
         do{
@@ -231,7 +237,7 @@ public class TenantService {
             cancelContract.setContractStatus(ContractStatus.PENDINGCANCEL);
             System.out.println("Yêu cầu hủy sẽ được chuyển tới cho chủ trọ.");
         }else{
-            menu.selectMenuTenant(scanner,tenantId);
+            menu.selectMenuTenant(scanner,user);
         }
     }
 }
