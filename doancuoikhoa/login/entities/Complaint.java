@@ -7,10 +7,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class Complaint {
-    private int id;
+    private String id;
     private static int autoId;
-    private int tenantId;
-    private int landLordId;
+    private int complainantId;
     private String roomId;
     private Role userType;
     private String content;
@@ -20,10 +19,9 @@ public class Complaint {
 
 
 
-    public Complaint(int tenantId, int landLordId, String roomId, String content) {
-        this.id = ++autoId;
-        this.tenantId = tenantId;
-        this.landLordId = landLordId;
+    public Complaint(int complainantId, String roomId, String content) {
+        this.id = "CP" +  ++autoId;
+        this.complainantId = complainantId;
         this.roomId = roomId;
         this.content = content;
         this.userType = Role.TENANT;
@@ -31,9 +29,9 @@ public class Complaint {
         this.complaintStatus = ComplaintStatus.PENDING;
         this.resolvedDate = complainDate.plusDays(7);
     }
-    public Complaint(int landLordId, String content) {
-        this.id = ++autoId;
-        this.landLordId = landLordId;
+    public Complaint(int complainantId, String content) {
+        this.id = "CP"+ ++autoId;
+        this.complainantId = complainantId;
         this.content = content;
         this.userType = Role.LANDLORD;
         this.complainDate = LocalDateTime.now();
@@ -41,28 +39,20 @@ public class Complaint {
         this.resolvedDate = complainDate.plusDays(2);
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         this.id = id;
     }
 
-    public int getTenantId() {
-        return tenantId;
+    public int getComplainantId() {
+        return complainantId;
     }
 
-    public void setTenantId(int tenantId) {
-        this.tenantId = tenantId;
-    }
-
-    public int getLandLordId() {
-        return landLordId;
-    }
-
-    public void setLandLordId(int landLordId) {
-        this.landLordId = landLordId;
+    public void setComplainantId(int complainantId) {
+        this.complainantId = complainantId;
     }
 
     public String getRoomId() {

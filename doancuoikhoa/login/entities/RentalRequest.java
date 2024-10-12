@@ -1,5 +1,7 @@
 package doancuoikhoa.login.entities;
 
+import doancuoikhoa.login.enums.RentalRequestStatus;
+
 import java.time.LocalDate;
 
 public class RentalRequest {
@@ -9,7 +11,7 @@ public class RentalRequest {
     private String roomId;
     private LocalDate startDate;
     private LocalDate endDate;
-    private boolean approved;
+    private RentalRequestStatus status;
 
 
     public RentalRequest(int tenantId, String roomId, LocalDate startDate, LocalDate endDate) {
@@ -18,7 +20,7 @@ public class RentalRequest {
         this.roomId = roomId;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.approved = false;
+        this.status = RentalRequestStatus.PENDING;
     }
 
     public String getId() {
@@ -45,12 +47,12 @@ public class RentalRequest {
         this.roomId = roomId;
     }
 
-    public boolean isApproved() {
-        return approved;
+    public RentalRequestStatus getStatus() {
+        return status;
     }
 
-    public void setApproved(boolean approved) {
-        this.approved = approved;
+    public void setStatus(RentalRequestStatus status) {
+        this.status = status;
     }
 
     public LocalDate getStartDate() {
@@ -77,7 +79,7 @@ public class RentalRequest {
                 ", roomId='" + roomId + '\'' +
                 ", startDate=" + startDate +
                 ", endDate=" + endDate +
-                ", approved=" + approved +
+                ", status=" + status +
                 '}';
     }
 }

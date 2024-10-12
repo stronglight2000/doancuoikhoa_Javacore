@@ -1,17 +1,13 @@
 package doancuoikhoa.login.service;
 
 import doancuoikhoa.login.data.Data;
-import doancuoikhoa.login.entities.LandLord;
 import doancuoikhoa.login.entities.Room;
 import doancuoikhoa.login.entities.User;
 import doancuoikhoa.login.enums.RoomStatus;
 import doancuoikhoa.login.utils.Utils;
-import doancuoikhoa.login.view.Menu;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Scanner;
 
 public class RoomService implements IAction<Room> {
@@ -35,9 +31,10 @@ public class RoomService implements IAction<Room> {
         System.out.println("Thêm phòng thành công");
     }
 
+
     @Override
-    public void update(Scanner scanner) {
-        Room existedRoom = findRoomById(scanner);
+    public void update(Scanner scanner, User user) {
+        Room existedRoom = findRoomById(scanner, user);
         if (existedRoom != null) {
             System.out.println("Mời bạn nhập lại mô tả cho căn phòng");
             String description = scanner.nextLine();
@@ -46,15 +43,15 @@ public class RoomService implements IAction<Room> {
             String location = scanner.nextLine();
             existedRoom.setLocation(location);
             System.out.println("Mời bạn nhập lại mức giá của căn phòng");
-            BigDecimal price = new BigDecimal(scanner.nextLine());
+            BigDecimal price = Utils.inputBigDecimal(scanner);
             existedRoom.setPrice(price);
             System.out.println("Cập nhật thông tin phòng thành công");
         }
     }
 
     @Override
-    public void delete(Scanner scanner) {
-        Room existedRoom = findRoomById(scanner);
+    public void delete(Scanner scanner, User user) {
+        Room existedRoom = findRoomById(scanner, user);
         if (existedRoom != null) {
             Data.rooms.remove(existedRoom);
             System.out.println("Xóa phòng thành công");
@@ -96,11 +93,9 @@ public class RoomService implements IAction<Room> {
     }
 
 
-    public Room findRoomById(Scanner scanner) {
-        System.out.println("Mời bạn nhập Id phòng cần tìm kiếm");
-        String id = scanner.nextLine();
+    public Room findRoomById(Scanner scanner,User user) {
         for (Room room : Data.rooms) {
-            if (room.getId().equals(id)) {
+            if (user.getId() == room.getLandLordId()) {
                 return room;
             }
         }

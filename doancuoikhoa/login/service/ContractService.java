@@ -21,7 +21,7 @@ public class ContractService {
         do{
             System.out.println("Mời bạn nhập id của căn phòng muốn kí hợp đồng ");
             id = scanner.nextLine();
-            roomId = rentalRequestService.checkRoomStatusById(id);
+            roomId = rentalRequestService.checkRoomStatusById(id);// check xem có đúng căn phòng đó đã yêu cầu được thuê và được chủ phòng chấp nhận
         }while(roomId ==null);
         int landLordId = roomService.findLandLordIdByIdRoom(id);
         System.out.println("Mời bạn nhập vào các điều khoản bổ sung nếu có (hoặc Enter để bỏ qua):");
@@ -90,6 +90,13 @@ public class ContractService {
         System.out.println("Không tìm thấy hợp đồng với Id bạn chọn.");
         return null;
     }
+    public void changeContractStatusAfterExpiration(){
+        for (Contract contract: Data.contracts) {
+            if(LocalDate.now().isAfter(contract.getEndDate()) && contract.getContractStatus() == ContractStatus.SIGNED){
+                contract.setContractStatus(ContractStatus.COMPLETED);
+            }
+        }
+    }
     public Contract findPendingCancelContractById(String contractId){
         for (Contract contract: Data.contracts) {
             if(contract.getId().equalsIgnoreCase(contractId) && contract.getContractStatus() == ContractStatus.PENDINGCANCEL){
@@ -111,6 +118,14 @@ public class ContractService {
         for (Contract contract: Data.contracts) {
             if(contract.getTenantId() == tenantId && contract.getContractStatus() == ContractStatus.SIGNED){
                 return contract.getRoomId();
+            }
+        }
+        return null;
+    }
+    public Contract checkTenantSignedContract(int tenantId, String roomId){
+        for (Contract contract:Data.contracts) {
+            if(contract.getTenantId()== tenantId && contract.getRoomId().equalsIgnoreCase(roomId)){
+                return contract;
             }
         }
         return null;

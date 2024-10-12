@@ -14,6 +14,15 @@ public class User {
     private UserStatus status;
 
 
+    public User(String username, String email, String password, String phoneNumber, Role role, UserStatus status) {
+        this.id = ++autoId;
+        this.username = username;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.role = role;
+        this.status = status;
+    }
     public User(String username, String email, String password, String phoneNumber, Role role) {
         this.id = ++autoId;
         this.username = username;
@@ -21,6 +30,7 @@ public class User {
         this.password = password;
         this.phoneNumber = phoneNumber;
         this.role = role;
+        this.status = UserStatus.ACTIVE;
     }
 
 

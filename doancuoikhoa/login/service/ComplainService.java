@@ -22,15 +22,14 @@ public class ComplainService {
             id = scanner.nextLine();
             // Kiểm tra xem có đúng là người dùng này đã kí hợp đồng với căn phòng này không?
             roomId = contractService.findRoomIdByTenantId(tenantId);
-            if(roomId == null){
+            if(!roomId.equalsIgnoreCase(id)){
                 System.out.println("Do bạn chưa kí hợp đồng với chủ phòng nên không thể khiếu nại.");
             }
-        }while (roomId == null);
-        int landLordId = roomService.findLandLordIdByIdRoom(roomId);
+        }while (!roomId.equalsIgnoreCase(id));
         System.out.println("Mời bạn nhập nội dung khiếu nại:");
         String content = scanner.nextLine();
         System.out.println("Tạo khiếu nại thành công. Khiếu nại đang được gửi đến cho quản trị viên.");
-        Complaint complaint = new Complaint(tenantId,landLordId,roomId,content);
+        Complaint complaint = new Complaint(tenantId,roomId,content);
         return complaint;
     }
     // Hàm tạo đơn khiếu nại cho chủ trọ
@@ -62,7 +61,27 @@ public class ComplainService {
             }
         }
     }
-    public void displayComplaint(){
+    public void processPendingComplaint(Scanner scanner){
+        System.out.println("Mời bạn nhập Id phiếu khiếu nại cần xử lý");
+        String complaintId = scanner.nextLine();
+        Complaint complaint = findPendingComplaintById(complaintId);
+        if(complaint == null){
+            System.out.println("Không tìm thấy khiếu nại với id phù hợp.");
+        }else {
+            System.out.println("Đã chuyển khiếu nại sang trạng thái đang xử lý.");
+        }
+
+    }
+    public Complaint findPendingComplaintById(String complaintId){
+        for (Complaint complaint: Data.complaints) {
+            if(complaint.getId().equalsIgnoreCase(complaintId) && complaint.getComplaintStatus()== ComplaintStatus.PENDING){
+                complaint.setComplaintStatus(ComplaintStatus.INREVIEW);
+                return complaint;
+            }
+        }
+        return null;
+    }
+    /*public void displayComplaint(){
         System.out.printf("%-5s %-10s %-10s %-10s %-10s %-15s %-20s %-15s %-20s%n",
                 "ID", "Tenant ID", "Landlord ID", "Room ID", "User Type", "Content", "Complaint Date", "Status", "Resolved Date");
         System.out.println("-------------------------------------------------------------------------------------------------------------");
@@ -103,7 +122,7 @@ public class ComplainService {
 
         }
 
-    }
+    }*/
     public void displayComplaintsByStatus(ComplaintStatus status) {
         List<Complaint> filteredComplaints = new ArrayList<>();
 
@@ -120,16 +139,15 @@ public class ComplainService {
         } else {
             System.out.println("Danh sách khiếu nại trong trạng thái " + status + ":");
             System.out.println("-------------------------------------------------------------------------------------------------------------");
-            System.out.printf("%-5s %-10s %-10s %-10s %-10s %-15s %-20s %-15s %-20s%n",
-                    "ID", "Tenant ID", "Landlord ID", "Room ID", "User Type", "Content", "Complaint Date", "Status", "Resolved Date");
+            System.out.printf("%-5s %-20s %-10s %-10s %-15s %-20s %-15s %-20s%n",
+                    "ID", "Người khiếu nại", "Room ID", "User Type", "Nội dung", "Ngày khiếu nại", "Trạng thái", "Hạn xử lý");
             System.out.println("-------------------------------------------------------------------------------------------------------------");
 
             for (Complaint complaint : filteredComplaints) {
                 if(status.equals(complaint.getComplaintStatus()) ){
-                    System.out.printf("%-5d %-10d %-10d %-10s %-10s %-15s %-20s %-15s %-20s%n",
+                    System.out.printf("%-5d %-20d %-10s %-10s %-15s %-20s %-15s %-20s%n",
                             complaint.getId(),
-                            complaint.getTenantId(),
-                            complaint.getLandLordId(),
+                            complaint.getComplainantId(),
                             complaint.getRoomId() != null ? complaint.getRoomId() : "N/A",
                             complaint.getUserType(),
                             complaint.getContent().length() > 12 ? complaint.getContent().substring(0, 12) + "..." : complaint.getContent(),

@@ -3,6 +3,7 @@ package doancuoikhoa.login.service;
 import doancuoikhoa.login.data.Data;
 import doancuoikhoa.login.entities.*;
 import doancuoikhoa.login.enums.ContractStatus;
+import doancuoikhoa.login.enums.RentalRequestStatus;
 import doancuoikhoa.login.enums.RoomStatus;
 import doancuoikhoa.login.utils.Utils;
 import doancuoikhoa.login.view.Menu;
@@ -14,8 +15,11 @@ import java.util.List;
 import java.util.Scanner;
 
 public class TenantService {
+
     RoomService roomService = new RoomService();
     ContractService contractService = new ContractService();
+    RentalRequestService rentalRequestService = new RentalRequestService();
+
     // Tìm phòng theo khoảng giá
     public void searchRoomsByPrice(Scanner scanner, User user) {
         List<Room> roomss = new ArrayList<>();
@@ -25,7 +29,7 @@ public class TenantService {
         System.out.println("Mời bạn nhập khoảng giá cao nhất");
         BigDecimal maxPrice = Utils.inputBigDecimal(scanner);
         for (Room room : Data.rooms) {
-            if (room.getPrice().compareTo(minPrice) >= 0 && room.getPrice().compareTo(maxPrice) <= 0 && room.getRoomStatus() == RoomStatus.AVAIABLE) {
+            if (room.getPrice().compareTo(minPrice) >= 0 && room.getPrice().compareTo(maxPrice) <= 0 /*&& room.getRoomStatus() == RoomStatus.AVAIABL*/) {
                 roomss.add(room);
                 existedRooms = true;
 
@@ -34,7 +38,7 @@ public class TenantService {
         }
         // Nếu tồn tại phòng thì hiển thị, không thì thông báo lỗi
         if(existedRooms){
-            roomService.display(roomss);
+            displayRoomforTenant(roomss);
             askTenantifWantToAddRRoomToFavourList(scanner,user);
         }
         else {
@@ -60,15 +64,41 @@ public class TenantService {
 
         }
         if(existedRooms){
-            roomService.display(roomss);
+            displayRoomforTenant(roomss);
             askTenantifWantToAddRRoomToFavourList(scanner,user);
         }else{
             System.out.println("Không tìm thấy phòng phù hợp.");
         }
 
     }
+    public void displayRoomforTenant(List<Room> rooms){
+        System.out.println("=============================== Danh sách phòng trọ ==============================================================");
+        System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s \n",
+                "ID", "Mô tả", "Vị trí", "Loại phòng", "Giá", "Trạng thái");
+        System.out.println("==================================================================================================================");
+
+        for (Room room: rooms) {
+            String roomStatus = (room.getRoomStatus() != null) ? room.getRoomStatus().toString() : "N/A";
+
+            // Giới hạn mô tả tối đa 20 ký tự
+            String description = room.getDescription();
+            if (description.length() > 20) {
+                description = description.substring(0, 17) + "...";
+            }
+
+            System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s\n",
+                    room.getId(),
+                    room.getDescription(),
+                    room.getLocation(),
+                    room.getPropertyType(),
+                    room.getPrice().toString(),
+                    roomStatus
+            );
+        }
+        System.out.println("==================================================================================================================");
+
+    }
     public void searchRoomsByType(Scanner scanner, User user){
-        Menu menu = new Menu();
         List<Room> roomss = new ArrayList<>();
         boolean existedRooms = false;
         System.out.println("Mời bạn nhập vào loại phòng cần tìm");
@@ -82,7 +112,7 @@ public class TenantService {
             }
         }
         if(existedRooms){
-            roomService.display(roomss);
+            displayRoomforTenant(roomss);
             askTenantifWantToAddRRoomToFavourList(scanner,user);
 
         }else{
@@ -90,7 +120,7 @@ public class TenantService {
         }
     }
     public void askTenantifWantToAddRRoomToFavourList(Scanner scanner, User user) {
-        Menu menu = new Menu();
+        Menu menu =Menu.getInstance();
         String choice;
         System.out.println("Bạn có muốn thêm phòng trọ nào vào danh sách yêu thích không(Y/N)?");
         choice = scanner.nextLine();
@@ -125,17 +155,48 @@ public class TenantService {
 
     }
     public void displayFavouriteList(){
-        System.out.println("=====================Danh sách phòng trọ yêu thích===============================================================");
-        System.out.printf("%-3s \t %-70s \t %-50s \t %-20s %-10s %-15s \n", "ID", "Mô tả", "Vị trí", "Loại phòng", "Mức giá","Trạng thái");
-        System.out.println("====================================================================================================================================================================================");
+        System.out.println("=============================== Danh sách phòng trọ ==============================================================");
+        System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s \n",
+                "ID", "Mô tả", "Vị trí", "Loại phòng", "Giá", "Trạng thái");
+        System.out.println("==================================================================================================================");
 
         for (FavouriteRoom favouriteRoom: Data.favouriteRooms) {
             Room room = roomService.findRoomById(favouriteRoom.getRoomId());
-            System.out.printf("%-3s \t %-70s \t %-50s \t %-20s %-10s %-15s \n", room.getId(), room.getDescription(), room.getLocation(), room.getPropertyType(), room.getPrice(),room.getRoomStatus());
+                String roomStatus = (room.getRoomStatus() != null) ? room.getRoomStatus().toString() : "N/A";
+
+                // Giới hạn mô tả tối đa 20 ký tự
+                String description = room.getDescription();
+                if (description.length() > 20) {
+                    description = description.substring(0, 17) + "...";
+                }
+
+                System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s\n",
+                        room.getId(),
+                        room.getDescription(),
+                        room.getLocation(),
+                        room.getPropertyType(),
+                        room.getPrice().toString(),
+                        roomStatus
+                );
+            }
+        System.out.println("==================================================================================================================");
+
+    }
+
+
+
+   public void displayRefusedRequest(int tenantId){
+        System.out.println("=================Yêu cầu thuê phòng bị từ chôi==============================");
+        System.out.printf("%-3s \t %-15s \t %-30s %-10s \n", "ID", "ID người thuê", "Id phòng muốn thuê", "Trạng thái");
+        System.out.println("============================================================================");
+        for (RentalRequest rentalRequest : Data.rentalRequests) {
+            if (rentalRequest.getTenantId() == tenantId && rentalRequest.getStatus() == RentalRequestStatus.REJECTED) {
+                System.out.printf("%-3s \t %-15s \t %-30s %-10s \n", rentalRequest.getId(), rentalRequest.getTenantId(), rentalRequest.getRoomId(), rentalRequest.getStatus());
+            }
         }
     }
     public Contract findPendingContractByTenantId(User user, Scanner scanner){
-        Menu menu = new Menu();
+        Menu menu =Menu.getInstance();
         for (Contract contract: Data.contracts) {
             if(contract.getTenantId() == user.getId() && contract.getContractStatus() == ContractStatus.PENDING){
                 return contract;
@@ -159,20 +220,23 @@ public class TenantService {
         }
     }
     public void requestToRentRoom(Scanner scanner,int tenantId){
-        Menu menu = new Menu();
         System.out.println("Mời bạn nhập các thông tin sau");
         Room existedRoom;
         String roomId;
         LocalDate startDate,endDate;
+        RentalRequest isValidRequest;
 
        do{
            System.out.println("Mời bạn nhập id căn phòng muốn thuê");
            roomId = scanner.nextLine();
+           isValidRequest = rentalRequestService.checkTenantRequest(tenantId,roomId);
            existedRoom = roomService.findRoomInAvaiableStatusById(roomId);
            if(existedRoom == null){
                System.out.println("Căn phòng bạn tìm kiếm đã được cho thuê/đặt trước hoặc id bạn nhập vào không hợp lệ.");
+           }else if(isValidRequest != null){
+               System.out.println("Bạn đã gửi yêu cầu thuê căn phòng này trước đó.");
            }
-       }while(existedRoom == null);
+       }while(existedRoom == null || isValidRequest != null ); // Check xem người thuê này đã gửi yêu câu thuê phòng trước đó hay chưa.
         do {
             startDate = Utils.checkDateValidate(scanner);
             endDate = Utils.checkDateValidate2(scanner);
@@ -188,7 +252,7 @@ public class TenantService {
         System.out.println("Yêu cầu thuê phòng đã được gửi đến cho chủ phòng.");
     }
     public void displayContractAfterLandLordApproved(User user,Scanner scanner){
-        Menu menu = new Menu();
+        Menu menu =Menu.getInstance();
         Contract contract = findPendingContractByTenantId(user,scanner);
         // Format và hiển thị hợp đồng
         contractService.formatContract(contract.getId());
@@ -224,7 +288,7 @@ public class TenantService {
 
     }
     public void cancelContract(Scanner scanner, User user){
-        Menu menu = new Menu();
+        Menu menu =Menu.getInstance();
         Contract cancelContract;
         do{
             System.out.println("Mời bạn nhập vào ID hợp đồng muốn hủy");

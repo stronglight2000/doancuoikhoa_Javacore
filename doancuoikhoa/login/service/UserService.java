@@ -18,8 +18,74 @@ public class UserService {
     private User duplicateEmail;
     private User duplicateUserName;
     User duplicatePassWord;
-    /*String loggedInUsername;*/
+    public User creatNewUser(Scanner scanner){
+        String username;
+        String email;
+        String password;
+        String phoneNumber;
+        Utils utils = new Utils();
+        do {
+            System.out.println("Mời bạn nhập vào username:");
+            username = scanner.nextLine();
+            duplicateUserName = findUserName(username);
+            if (duplicateUserName != null) {
+                System.out.println("Username đã tồn tại, mời bạn nhập lại:");
+            }
+        }
+        while (duplicateUserName !=null);
+        do {
 
+            System.out.println("Mời bạn nhập vào email:");
+            email = scanner.nextLine();
+            isValid = utils.checkEmail(email);
+            duplicateEmail = findUserEmail(email);
+            if (!isValid || duplicateEmail != null) {
+                System.out.println("Email không hợp lệ hoặc đã tồn tại, mời bạn nhập lại");
+            }
+        } while (!isValid || duplicateEmail != null);
+        do {
+            System.out.println("Mời bạn nhập vào password:(password dài từ 7 đến 15 ký tự, chứa ít nhất 1 ký tự in hoa, 1 ký tự đặc biệt)");
+            password = scanner.nextLine();
+            isValid = utils.checkPassword(password);
+            if (!isValid) {
+                System.out.println("Password không hợp lệ, mời bạn nhập lại");
+            }
+        } while (!isValid);
+        do {
+            System.out.println("Mời bạn nhập số điện thoại(có 10 số và bắt buộc phải bắt đầu bằng 0)");
+            phoneNumber = scanner.nextLine();
+            isValid = utils.checkphoneNumber(phoneNumber);
+            if (!isValid) {
+                System.out.println("Số điện thoại không hợp lệ, mời bạn nhập lại");
+            }
+        } while (!isValid);
+        Role role = null;
+        boolean isValidRole = false;
+        do {
+            System.out.println("Bạn là:");
+            System.out.println("1. Chủ trọ");
+            System.out.println("2. Người đi thuê");
+            int choice = Utils.inputInteger(scanner);
+            switch (choice){
+                case 1:
+                    role = Role.LANDLORD;
+                    isValidRole = true;
+                    break;
+                case 2:
+                    role = Role.TENANT;
+                    isValidRole = true;
+                    break;
+                default:
+                    System.out.println("Không hợp lệ, mời bạn nhập lại.");
+                    break;
+            }
+
+        }while(!isValidRole);
+        System.out.println("Tạo tài khoản thành công");
+        User user = new User(username, email, password,phoneNumber,role);
+        return user;
+
+    }
     public User registerAccount(Scanner scanner) {
 
         String username;
@@ -63,17 +129,28 @@ public class UserService {
                 System.out.println("Số điện thoại không hợp lệ, mời bạn nhập lại");
             }
         } while (!isValid);
-        System.out.println("Bạn là:");
-        System.out.println("1. Chủ trọ");
-        System.out.println("2. Người đi thuê");
-        int choice = Utils.inputInteger(scanner);
-        Role role;
-        if(choice == 1){
-            role = Role.LANDLORD;
-        }
-        else{
-            role = Role.TENANT;
-        }
+        Role role = null;
+        boolean isValidRole = false;
+        do {
+            System.out.println("Bạn là:");
+            System.out.println("1. Chủ trọ");
+            System.out.println("2. Người đi thuê");
+            int choice = Utils.inputInteger(scanner);
+            switch (choice){
+                case 1:
+                    role = Role.LANDLORD;
+                    isValidRole = true;
+                    break;
+                case 2:
+                    role = Role.TENANT;
+                    isValidRole = true;
+                    break;
+                default:
+                    System.out.println("Không hợp lệ, mời bạn nhập lại.");
+                    break;
+            }
+
+        }while(!isValidRole);
         System.out.println("Tạo tài khoản thành công");
         User user = new User(username, email, password,phoneNumber,role);
         Data.users.add(user);
@@ -124,6 +201,7 @@ public class UserService {
     }
 
     public void changePassWordWhenForget(Scanner scanner) {
+        Menu menu = Menu.getInstance();
         System.out.println("Mời bạn nhập vào email");
         String email = scanner.nextLine();
         duplicateEmail = findUserEmail(email);
@@ -133,20 +211,19 @@ public class UserService {
                 String password = scanner.nextLine();
                 duplicateEmail.setPassword(password);
                 System.out.println("Mật khẩu đã được thay đổi.");
-                Menu menu = new Menu();
                 menu.selectMenuPassWordWrong(scanner);
             }
 
 
          else {
             System.out.println("Chưa tồn tại tài khoản");
-            Menu menu = new Menu();
             menu.selectRegisterMenu(scanner);
         }
     }
 
 
     public User logIn(Scanner scanner) {
+        Menu menu = Menu.getInstance();
         String username;
         String password;
 //      boolean isValid;
@@ -161,7 +238,6 @@ public class UserService {
                 duplicateUserName=findUserName(username);
                 duplicatePassWord = findPassWord(username, password);
                 User duplicateUser = findUserName(username);
-                Menu menu = new Menu();
                 if (duplicatePassWord!=null && duplicateUserName !=null && duplicatePassWord.getStatus() == UserStatus.ACTIVE ) {
                     if(findRoleByUsername(username) == Role.ADMIN){
                         System.out.println("Chào mừng" + " " + username);
@@ -253,11 +329,28 @@ public class UserService {
     }
 
     public void displayUser(){
+        System.out.println("=====================Danh sách người dùng==========================");
+        // Tiêu đề cột
+        System.out.printf("%-5s %-20s %-30s %-15s %-15s %-10s \n",
+                "ID", "Tên đăng nhập", "Email", "Số điện thoại", "Vai trò", "Trạng thái", "Auto ID");
+        System.out.println("===================================================================");
 
+        // Lặp qua danh sách người dùng để in thông tin
+        for (User user : Data.users) {
+            System.out.printf("%-5d %-20s %-30s %-15s %-15s %-10s\n",
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getPhoneNumber(),
+                    user.getRole(),
+                    user.getStatus());
+        }
+        System.out.println("===================================================================");
+    }
     }
 
 
 
 
 
-}
+

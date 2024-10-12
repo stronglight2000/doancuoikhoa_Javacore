@@ -12,14 +12,23 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Menu {
-    UserService userService = new UserService();
+    private static Menu instance;
+
     int choice;
-    RoomService roomService = new RoomService();
     TenantService tenantService = new TenantService();
+    RoomService roomService = new RoomService();
     LandLordService landLordService = new LandLordService();
     ContractService contractService = new ContractService();
     ComplainService complainService = new ComplainService();
     AdminService adminService = new AdminService();
+    UserService userService = new UserService();
+    private Menu(){}
+    public static synchronized Menu getInstance(){
+        if(instance == null){
+            instance = new Menu();
+        }
+        return instance;
+    }
     private void registerMenu(){
         System.out.println("1-Đăng nhập");
         System.out.println("2-Đăng ký");
@@ -38,6 +47,7 @@ public class Menu {
                     break;
                 default:
                     System.out.println("Yêu cầu không hợp lệ");
+                    break;
             }
         }
 
@@ -81,6 +91,7 @@ public class Menu {
             switch (choice) {
                 case 1:
                     complainService.displayComplaintsByStatus(ComplaintStatus.PENDING);
+                    complainService.processPendingComplaint(scanner);
                     break;
                 case 2:
                     complainService.displayComplaintsByStatus(ComplaintStatus.INREVIEW);
@@ -92,9 +103,11 @@ public class Menu {
                     complainService.displayComplaintsByStatus(ComplaintStatus.OVERDUE);
                     break;
                 case 5:
+                    selectMenuAdminWhenLogInSuccess(scanner);
                     break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
+                    break;
 
             }
         }
@@ -105,8 +118,11 @@ public class Menu {
             int choice = Utils.inputInteger(scanner);
             switch (choice){
                 case 1:
+                    User user = userService.creatNewUser(scanner);
+                    Data.users.add(user);
                     break;
                 case 2:
+                    userService.displayUser();
                     break;
                 case 3:
                     selectMenuListOfComplanints(scanner);
@@ -121,6 +137,7 @@ public class Menu {
                     break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp");
+                    break;
 
             }
         }
@@ -156,12 +173,14 @@ public class Menu {
                 case 1:
                     Complaint complaint = complainService.createLandLordComplaintFile(scanner, user.getId());
                     Data.complaints.add(complaint);
+                    complainService.processComplaints();
                     break;
                 case 2:
                     selectMenuLandLord(scanner,user);
                     break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
+                    break;
 
             }
         }
@@ -185,8 +204,10 @@ public class Menu {
                     break;
                 case 5:
                     selectMenuLandLord(scanner, user);
+                    break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp, mời bạn nhập lại.");
+                    break;
 
 
             }
@@ -210,8 +231,10 @@ public class Menu {
                     break;
                 case 3:
                     selectMenuLandLord(scanner,user);
+                    break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
+                    break;
 
             }
         }
@@ -226,16 +249,16 @@ public class Menu {
                     roomService.insert(room);
                     break;
                 case 2:
-                    roomService.update(scanner);
+                    roomService.update(scanner,user);
                     break;
                 case 3:
-
+                    roomService.delete(scanner,user);
                     break;
                 case 4:
                     landLordService.displayListRoom(user.getId());
                     break;
                 case 5:
-                    landLordService.processRentalRequest(user.getId(), scanner);
+                    landLordService.displayRentalRequest(user,scanner);
                     break;
                 case 6:
                     selectLandLordContractMenu(scanner, user);
@@ -245,10 +268,13 @@ public class Menu {
                     break;
                 case 8:
                     selectLandLordComplainMenu(scanner, user);
+                    break;
                 case 9:
                     selectRegisterMenu(scanner);
+                    break;
                 default:
                     System.out.println("Không có chức năng phù hợp");
+                    break;
 
             }
         }
@@ -284,14 +310,20 @@ public class Menu {
                     break;
                 case 4:
                     selectMenuTenant(scanner,user);
+                    break;
+                default:
+                    System.out.printf("Không có lựa chọn phù hợp");
+                    break;
             }
         }
     }
     private void displayMenuRequestToRent(){
         System.out.println("1. Yêu cầu thuê phòng");
-        System.out.println("2. Quay lại");
+        System.out.println("2. Yêu cầu thuê phòng bị từ chối");
+        System.out.println("3. Quay lại");
     }
     public void selectMenuRequestToRent(Scanner scanner,User user){
+        TenantService tenantService = new TenantService();
         while(true){
             displayMenuRequestToRent();
             int choice = Utils.inputInteger(scanner);
@@ -300,10 +332,14 @@ public class Menu {
                     tenantService.requestToRentRoom(scanner, user.getId());
                     break;
                 case 2:
+                    tenantService.displayRefusedRequest(user.getId());
+                    break;
+                case 3:
                     selectMenuTenant(scanner,user);
                     break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
+                    break;
 
             }
         }
@@ -341,6 +377,7 @@ public class Menu {
                     break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
+                    break;
 
             }
         }
@@ -355,7 +392,8 @@ public class Menu {
             int choice = Utils.inputInteger(scanner);
             switch (choice){
                 case 1:
-                    complainService.createTenantComplaintFile(scanner, user.getId());
+                    Complaint complaint = complainService.createTenantComplaintFile(scanner, user.getId());
+                    Data.complaints.add(complaint);
                     break;
                 case 2:
                     selectMenuTenant(scanner,user);
@@ -384,8 +422,10 @@ public class Menu {
                     break;
                 case 3:
                     selectMenuLandLord(scanner,user);
+                    break;
                 default:
                     System.out.println("Không có lựa chọn phù hợp.");
+                    break;
 
             }
         }
@@ -413,10 +453,13 @@ public class Menu {
                     break;
                 case 6:
                     selectTenantComplaintMenu(scanner, user);
+                    break;
                 case 7:
                     selectRegisterMenu(scanner);
+                    break;
                 default:
                     System.out.println("Không có chức năng phù hợp.");
+                    break;
 
             }
         }

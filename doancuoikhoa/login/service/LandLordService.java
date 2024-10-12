@@ -3,6 +3,7 @@ package doancuoikhoa.login.service;
 import doancuoikhoa.login.data.Data;
 import doancuoikhoa.login.entities.*;
 import doancuoikhoa.login.enums.ContractStatus;
+import doancuoikhoa.login.enums.RentalRequestStatus;
 import doancuoikhoa.login.enums.RoomStatus;
 import doancuoikhoa.login.utils.Utils;
 import doancuoikhoa.login.view.Menu;
@@ -13,6 +14,7 @@ public class LandLordService {
     ContractService contractService = new ContractService();
     RoomService roomService = new RoomService();
     RentalRequestService rentalRequestService = new RentalRequestService();
+
     // Tìm hợp đồng
 
     public void displayContractInPendingStatus(int landLordId) {
@@ -23,25 +25,99 @@ public class LandLordService {
     }
 
     public void displayListRoom(int landLordId) {
-        System.out.println("=====================Danh sách phòng trọ===============================================================");
-        System.out.printf("%-3s \t %-70s \t %-50s \t %-20s %-10s %-15s \n", "ID", "Mô tả", "Vị trí", "Loại phòng", "Mức giá", "Trạng thái");
-        System.out.println("====================================================================================================================================================================================");
+        System.out.println("=============================== Danh sách phòng trọ ==============================================================");
+        System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s %-10s\n",
+                "ID", "Mô tả", "Vị trí", "Loại phòng", "Giá", "Trạng thái", "Bị khóa");
+        System.out.println("==================================================================================================================");
+
         for (Room room : Data.rooms) {
             if (room.getLandLordId() == landLordId) {
-                System.out.printf("%-3s \t %-70s \t %-50s \t %-20s %-10s %-15s \n", room.getId(), room.getDescription(), room.getLocation(), room.getPropertyType(), room.getPrice(), room.getRoomStatus());
+                String roomStatus = (room.getRoomStatus() != null) ? room.getRoomStatus().toString() : "N/A";
+                String isBlocked = room.isBlocked() ? "Có" : "Không";
+
+                // Giới hạn mô tả tối đa 20 ký tự
+                String description = room.getDescription();
+                if (description.length() > 20) {
+                    description = description.substring(0, 17) + "...";
+                }
+
+                System.out.printf("%-10s %-20s %-30s %-15s %-15s %-10s %-10s\n",
+                        room.getId(),
+                        room.getDescription(),
+                        room.getLocation(),
+                        room.getPropertyType(),
+                        room.getPrice().toString(),
+                        roomStatus,
+                        isBlocked
+                );
             }
         }
+            System.out.println("==================================================================================================================");
+
     }
 
-    public void processRentalRequest(int landLordId, Scanner scanner) {
-        System.out.println("=================Yêu cầu thuê phòng===================");
-        System.out.printf("%-3s \t %-15s \t %-3s \n", "ID", "ID người thuê", "Id phòng muốn thuê");
-        System.out.println("======================================================");
+
+
+    public void displayRentalRequest(User user, Scanner scanner) {
+        Menu menu = Menu.getInstance();
+        System.out.println("=================Yêu cầu thuê phòng==================================");
+        System.out.printf("%-3s \t %-15s \t %-30s %-10s \n", "ID", "ID người thuê", "Id phòng muốn thuê","Trạng thái");
+        System.out.println("=====================================================================");
+        boolean hasPendingRequests = false;
         for (RentalRequest rentalRequest : Data.rentalRequests) {
-            if (roomService.findLandLordIdByIdRoom(rentalRequest.getRoomId()) == landLordId) {
-                System.out.printf("%-3s \t %-15s \t %-3s \n", rentalRequest.getId(), rentalRequest.getTenantId(), rentalRequest.getRoomId());
+            if (roomService.findLandLordIdByIdRoom(rentalRequest.getRoomId()) == user.getId()&&rentalRequest.getStatus() == RentalRequestStatus.PENDING) {
+                System.out.printf("%-3s \t %-15s \t %-30s %-10s \n", rentalRequest.getId(), rentalRequest.getTenantId(), rentalRequest.getRoomId(),rentalRequest.getStatus());
+                hasPendingRequests = true;
             }
         }
+        // Kiểm tra nếu không có yêu cầu nào
+        if (!hasPendingRequests) {
+            System.out.println("Không có yêu cầu thuê phòng nào đang chờ duyệt.");
+            menu.selectMenuLandLord(scanner, user); // Quay lại menu chính nếu không có yêu cầu
+            return;
+        }
+        while(true){
+            System.out.println("Bạn muốn chọn \n1. Duyệt \n2. Từ chối \n3.Quay lại ");
+            int choice = Utils.inputInteger(scanner);
+            switch (choice){
+                case 1:
+                    approvedRentalRequest(user.getId(), scanner);
+                    break;
+                case 2:
+                    refuseRentalRequest(user.getId(), scanner);
+                    break;
+                case 3:
+                    menu.selectMenuLandLord(scanner, user);
+                    return; // Thoát vòng lặp sau khi quay lại menu chính
+                default:
+                    System.out.println("Không có lựa chọn phù hợp.");
+                    break; // Tiếp tục vòng lặp nếu không có lựa chọn phù hợp
+
+            }
+        }
+
+    }
+    public void refuseRentalRequest(int landLordId, Scanner scanner){
+        String id, roomId;
+        System.out.println();
+        do {
+            System.out.println("Nhập id căn phòng mà bạn muốn từ chối duyệt");
+            id = scanner.nextLine();
+            roomId = rentalRequestService.checkRoomById(id);
+
+        } while (roomId == null);
+        for (RentalRequest rentalRequest: Data.rentalRequests) {
+            if(rentalRequest.getRoomId().equalsIgnoreCase(roomId) && rentalRequest.getStatus() == RentalRequestStatus.PENDING){
+                rentalRequest.setStatus(RentalRequestStatus.REJECTED);
+                System.out.println("Đã từ chối cho thuê phòng.");
+            }
+        }
+
+
+    }
+
+
+    public void approvedRentalRequest(int landLordId, Scanner scanner) {
         String id, roomId;
         do {
             System.out.println("Nhập id căn phòng mà bạn muốn duyệt");
@@ -50,8 +126,8 @@ public class LandLordService {
 
         } while (roomId == null);
         for (RentalRequest rentalRequest : Data.rentalRequests) {
-            if (rentalRequest.getRoomId().equalsIgnoreCase(roomId) && !rentalRequest.isApproved()) {
-                rentalRequest.setApproved(true);
+            if (rentalRequest.getRoomId().equalsIgnoreCase(roomId) && rentalRequest.getStatus() == RentalRequestStatus.PENDING) {
+                rentalRequest.setStatus(RentalRequestStatus.APPROVED);
                 System.out.println("Yêu cầu đã được duyệt, bạn có thể tạo hợp đồng.");
                 Contract contract = contractService.createContract(scanner, rentalRequest.getTenantId(), rentalRequest.getStartDate(), rentalRequest.getEndDate());
                 Data.contracts.add(contract);
@@ -93,7 +169,7 @@ public class LandLordService {
     }
 
     public void findPendingCancelContractsByLandLordId(User user, Scanner scanner) {
-        Menu menu = new Menu();
+        Menu menu = Menu.getInstance();
         boolean foundContract = false;
         for (Contract contract : Data.contracts) {
             if (contract.getLandLordId() == user.getId() && contract.getContractStatus() == ContractStatus.PENDINGCANCEL) {
@@ -119,8 +195,8 @@ public class LandLordService {
     }
 
     public void processCancelContract(Scanner scanner, User user) {
-        System.out.println("Bạn có muốn hủy/từ chối nào không (Y/N)");
-        Menu menu = new Menu();
+        Menu menu = Menu.getInstance();
+        System.out.println("Bạn có muốn hủy/từ chối hợp đồng nào không (Y/N)");
         String choice = scanner.nextLine();
         Contract cancelContract;
         if (choice.equalsIgnoreCase("Y")) {
@@ -131,7 +207,7 @@ public class LandLordService {
             }while(cancelContract == null); // Vòng lăp sẽ tìm cho tới khi nào chủ trọ nhập đúng Id của phòng trọ thì thôi.
             boolean isValidChoice = false; // Để kiểm tra tính hợp lệ của lựa chọn
             while (!isValidChoice) {
-                System.out.println("Mời bạn lựa chọn 1.Hủy 2.Từ chối");
+                System.out.println("Mời bạn lựa chọn 1.Hủy \n2.Từ chối");
                 int choice2 = Utils.inputInteger(scanner);
                 switch (choice2) {
                     case 1:
